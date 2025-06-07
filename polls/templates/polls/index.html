@@ -1,0 +1,24 @@
+{# polls/templates/polls/index.html #}
+{% extends 'polls/base.html' %}
+
+{% block title %}Система голосування{% endblock %}
+
+{% block content %}
+    <h1>Ласкаво просимо до системи голосування!</h1>
+
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }} {# Поле для нікнейму #}
+
+        <button type="submit" name="vote_button">Проголосувати</button>
+        <button type="submit" name="results_button" class="secondary-button">Переглянути результати</button>
+    </form>
+{% endblock %}

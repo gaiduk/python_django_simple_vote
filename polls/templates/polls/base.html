@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Голосування{% endblock %}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1, h2 { color: #0056b3; }
+        .messages { list-style: none; padding: 0; margin-bottom: 15px; } /* Додано для ul.messages */
+        .message { padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+        .message.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .message.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .message.info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        form { margin-top: 20px; }
+        input[type="text"], input[type="submit"], button[type="submit"] { padding: 10px; border-radius: 5px; border: 1px solid #ddd; margin-right: 10px; }
+        input[type="submit"], button[type="submit"] { background-color: #007bff; color: white; cursor: pointer; border: none; }
+        input[type="submit"]:hover, button[type="submit"]:hover { background-color: #0056b3; }
+        ul { list-style: none; padding: 0; }
+        li { margin-bottom: 10px; }
+        .option-item {
+            display: flex;
+            align-items: center;
+            border: 1px solid #eee;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .option-item strong { flex-grow: 1; }
+        .option-item button {
+            margin-left: 10px;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .option-item button.score-3 { background-color: #28a745; color: white; } /* Green */
+        .option-item button.score-2 { background-color: #ffc107; color: #333; } /* Yellow */
+        .option-item button.score-1 { background-color: #17a2b8; color: white; } /* Cyan */
+        .option-item button:disabled { background-color: #cccccc; cursor: not-allowed; }
+        .results-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .results-table th, .results-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .results-table th { background-color: #007bff; color: white; }
+        .results-table tr:nth-child(even) { background-color: #f2f2f2; }
+        .button-group button { margin: 5px; }
+        .current-votes { margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
+        .current-votes h3 { color: #555; }
+        .current-votes ul { list-style-type: disc; margin-left: 20px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 0.9em; color: #777; }
+        p a { color: #007bff; text-decoration: none; }
+        p a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li {% if message.tags %} class="message {{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+
+        <div class="footer">
+            <p><a href="{% url 'polls:results' %}">Переглянути результати</a></p>
+        </div>
+    </div>
+</body>
+</html>

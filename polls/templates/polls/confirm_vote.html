@@ -1,0 +1,37 @@
+{# polls/templates/polls/confirm_vote.html #}
+{% extends 'polls/base.html' %}
+
+{% block title %}Підтвердити голосування{% endblock %}
+
+{% block content %}
+    <h1>Підтвердження голосування</h1>
+    <p>Привіт, <strong>{{ nickname }}</strong>!</p>
+    <p>Будь ласка, перегляньте ваші голоси перед підтвердженням:</p>
+
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <ul>
+        {% for vote_detail in confirmed_votes_details %}
+            <li>
+                Варіант: <strong>{{ vote_detail.option_text }}</strong>:
+                <strong>{{ vote_detail.score }} балів</strong>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <p>Загальна сума балів: <strong>{{ total_score_sum }}</strong></p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" name="confirm_button">Підтвердити та завершити голосування</button>
+        <button type="submit" name="change_button" class="secondary-button">Змінити голоси</button>
+    </form>
+
+    {# Цей рядок <p><a href="{% url 'polls:vote' %}">...</a></p> тепер не потрібен, оскільки кнопка "Змінити голоси" виконує те ж саме #}
+{% endblock %}

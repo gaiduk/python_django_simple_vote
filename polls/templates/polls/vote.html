@@ -1,0 +1,56 @@
+{# polls/templates/polls/vote.html #}
+{% extends 'polls/base.html' %}
+
+{% block title %}Голосувати{% endblock %}
+
+{% block content %}
+    <h1>Голосування</h1>
+    <p>Привіт, <strong>{{ nickname }}</strong>!</p>
+    <p>У вас залишилися бали: <strong>{{ available_scores|join:", " }}</strong></p>
+
+    {% if not options %}
+        <p>Наразі немає варіантів для голосування. Будь ласка, додайте їх через адмін-панель.</p>
+    {% else %}
+        <ul>
+            {% for option in options %}
+                <li class="option-item">
+                    <strong>{{ option.text }}</strong>
+                    <div class="button-group">
+                        <form method="post" style="display: inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="option_id" value="{{ option.id }}">
+                            {% for score_value in score_options %}
+                                <button type="submit" name="score" value="{{ score_value }}"
+                                        class="score-{{ score_value }}"
+                                        {% if score_value not in available_scores %}disabled{% endif %}>
+                                    +{{ score_value }}
+                                </button>
+                            {% endfor %}
+                        </form>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if temp_votes %}
+        <div class="current-votes">
+            <h3>Ваші поточні голоси:</h3>
+            <ul>
+                {% load poll_filters %}
+                {# temp_votes тепер словник {score_value: option_id} #}
+                {% for score_str, option_id in temp_votes.items %} {# <--- ЗМІНЕНО #}
+                    <li>
+                        Віддано <strong>{{ score_str }} балів</strong> за варіант:
+                        <strong>{{ options|get_option_by_id:option_id }}</strong>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    {% if not available_scores %}
+        <p>Ви використали всі свої бали. Будь ласка, <a href="{% url 'polls:confirm_vote' %}">підтвердіть ваші голоси</a>.</p>
+    {% endif %}
+
+{% endblock %}

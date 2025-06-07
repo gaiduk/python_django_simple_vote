@@ -1,0 +1,30 @@
+{% extends 'polls/base.html' %}
+
+{% block title %}Результати голосування{% endblock %}
+
+{% block content %}
+    <h1>Результати голосування</h1>
+
+    {% if not results %}
+        <p>Голосів ще немає.</p>
+    {% else %}
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th>Варіант</th>
+                    <th>Загальна кількість балів</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for option in results %}
+                    <tr>
+                        <td>{{ option.text }}</td>
+                        <td>{{ option.total_score|default:"0" }}</td> {# Показуємо 0, якщо голосів ще немає #}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    <p><a href="{% url 'polls:index' %}">Проголосувати знову (якщо дозволено)</a></p>
+{% endblock %}
