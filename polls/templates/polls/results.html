@@ -1,30 +1,61 @@
+{# polls/templates/polls/results.html #}
 {% extends 'polls/base.html' %}
 
-{% block title %}Результати голосування{% endblock %}
-
 {% block content %}
-    <h1>Результати голосування</h1>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            {% if active_poll %}
+                <h2 class="mb-4 text-center">Результати опитування: {{ active_poll.title }}</h2>
 
-    {% if not results %}
-        <p>Голосів ще немає.</p>
-    {% else %}
-        <table class="results-table">
-            <thead>
-                <tr>
-                    <th>Варіант</th>
-                    <th>Загальна кількість балів</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for option in results %}
-                    <tr>
-                        <td>{{ option.text }}</td>
-                        <td>{{ option.total_score|default:"0" }}</td> {# Показуємо 0, якщо голосів ще немає #}
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% endif %}
+                {% if voter_nickname %}
+                    <p class="lead text-center">Ви увійшли як: <strong>{{ voter_nickname }}</strong> <a href="{% url 'polls:set_nickname' %}" class="btn btn-outline-secondary btn-sm ms-2">Змінити нікнейм</a></p>
+                    <hr>
+                {% endif %}
 
-    <p><a href="{% url 'polls:index' %}">Проголосувати знову (якщо дозволено)</a></p>
-{% endblock %}
+                <div class="card shadow-sm mb-4"> {# Додано легку тінь #}
+                    <div class="card-header">
+                        <h4 class="mb-0 text-white">Підсумки голосування</h4>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped table-hover mb-0"> {# table-bordered для ліній, table-striped для чергування #}
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="w-75">Варіант</th>
+                                    <th scope="col" class="text-center">Загальний бал</th> {# Змінено text-end на text-center #}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in results %}
+                                <tr {% if forloop.counter0|divisibleby:2 %}class="table-row-even"{% else %}class="table-row-odd"{% endif %}> {# Для контролю фону #}
+                                    <td>{{ result.option_text }}</td>
+                                    <td class="text-center"> {# Змінено text-end на text-center #}
+                                        <span class="results-score">{{ result.total_score }}</span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="2" class="text-center text-muted py-4">Жодного голосу ще не віддано.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <a href="{% url 'polls:index' %}" class="btn btn-secondary btn-lg">Повернутися на головну</a>
+                </div>
+
+            {% else %}
+                <div class="alert alert-info text-center" role="alert">
+                    Наразі немає активних опитувань для відображення результатів.
+                </div>
+                <div class="text-center mt-4">
+                    <a href="{% url 'polls:index' %}" class="btn btn-secondary btn-lg">Повернутися на головну</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock content %}

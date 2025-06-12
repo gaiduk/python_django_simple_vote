@@ -1,37 +1,41 @@
-{# polls/templates/polls/confirm_vote.html #}
 {% extends 'polls/base.html' %}
 
-{% block title %}Підтвердити голосування{% endblock %}
-
 {% block content %}
-    <h1>Підтвердження голосування</h1>
-    <p>Привіт, <strong>{{ nickname }}</strong>!</p>
-    <p>Будь ласка, перегляньте ваші голоси перед підтвердженням:</p>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h2 class="mb-4">Підтвердження голосування: {{ active_poll.title }}</h2>
 
-    {% if messages %}
-        <ul class="messages">
-            {% for message in messages %}
-                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+            {% if voter_nickname %}
+                <p class="lead">Ваш нікнейм: <strong>{{ voter_nickname }}</strong></p>
+            {% endif %}
 
-    <ul>
-        {% for vote_detail in confirmed_votes_details %}
-            <li>
-                Варіант: <strong>{{ vote_detail.option_text }}</strong>:
-                <strong>{{ vote_detail.score }} балів</strong>
-            </li>
-        {% endfor %}
-    </ul>
+            <div class="card mb-4">
+                <div class="card-header">
+                    Ваші голоси:
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for vote_item in confirmed_votes %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>{{ vote_item.option_text }}</strong>
+                            <span class="badge bg-primary">{{ vote_item.score }} балів</span>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item text-muted">Ви ще не призначили жодного балу.</li>
+                    {% endfor %}
+                </ul>
+            </div>
 
-    <p>Загальна сума балів: <strong>{{ total_score_sum }}</strong></p>
+            <form method="post" action="{% url 'polls:confirm_vote' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success btn-lg me-2">Завершити голосування</button>
+                <a href="{% url 'polls:change_votes' %}" class="btn btn-warning btn-lg">Змінити голоси</a>
+            </form>
 
-    <form method="post">
-        {% csrf_token %}
-        <button type="submit" name="confirm_button">Підтвердити та завершити голосування</button>
-        <button type="submit" name="change_button" class="secondary-button">Змінити голоси</button>
-    </form>
-
-    {# Цей рядок <p><a href="{% url 'polls:vote' %}">...</a></p> тепер не потрібен, оскільки кнопка "Змінити голоси" виконує те ж саме #}
+            <p class="mt-4">
+                <a href="{% url 'polls:index' %}" class="btn btn-secondary">Повернутися на головну</a>
+            </p>
+        </div>
+    </div>
+</div>
 {% endblock %}

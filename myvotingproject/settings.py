@@ -1,12 +1,13 @@
 # myvotingproject/settings.py
 
-import os # Додайте цей імпорт
+import os
+from pathlib import Path
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-ваша-секретна-фраза-згенерується-автоматично' # Залиште згенерований Django ключ
+SECRET_KEY = 'django-insecure-вашкодсекретнийключ' # Замініть на реальний ключ у продакшні
 
-DEBUG = True
+DEBUG = True # В продакшні має бути False
 
 ALLOWED_HOSTS = []
 
@@ -17,7 +18,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'polls',  # <--- Додайте ваш додаток сюди
+    'polls', # Ваш додаток
+    'crispy_forms', # Додано для форм
+    'crispy_bootstrap5', # Додано для стилів Bootstrap 5
 ]
 
 MIDDLEWARE = [
@@ -35,8 +38,8 @@ ROOT_URLCONF = 'myvotingproject.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
+        'DIRS': [], # Порожній список, Django шукатиме в APP_DIRS
+        'APP_DIRS': True, # Це дозволяє Django шукати шаблони всередині папки 'templates' кожного додатка
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
@@ -53,7 +56,7 @@ WSGI_APPLICATION = 'myvotingproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
@@ -72,14 +75,19 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-LANGUAGE_CODE = 'uk-ua' # Змініть на українську мову
+LANGUAGE_CODE = 'uk-ua' # Змінено на українську
 
-TIME_ZONE = 'Europe/Kiev' # Встановіть часовий пояс Києва
+TIME_ZONE = 'Europe/Kiev' # Змінено на Київський час
 
 USE_I18N = True
 
 USE_TZ = True
 
-STATIC_URL = '/static/'
+STATIC_URL = 'static/'
+
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Налаштування для django-crispy-forms та Bootstrap 5
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"

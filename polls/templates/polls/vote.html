@@ -1,56 +1,102 @@
 {# polls/templates/polls/vote.html #}
 {% extends 'polls/base.html' %}
-
-{% block title %}Голосувати{% endblock %}
+{% load poll_filters %} {# Завантажуємо наші кастомні фільтри, включаючи get_item #}
+{% load crispy_forms_tags %}
 
 {% block content %}
-    <h1>Голосування</h1>
-    <p>Привіт, <strong>{{ nickname }}</strong>!</p>
-    <p>У вас залишилися бали: <strong>{{ available_scores|join:", " }}</strong></p>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            {% if active_poll %}
+                <h2 class="mb-4">Голосування: {{ active_poll.title }}</h2>
+                {% if active_poll.description %}
+                    <p class="lead">{{ active_poll.description }}</p>
+                    <hr>
+                {% endif %}
 
-    {% if not options %}
-        <p>Наразі немає варіантів для голосування. Будь ласка, додайте їх через адмін-панель.</p>
-    {% else %}
-        <ul>
-            {% for option in options %}
-                <li class="option-item">
-                    <strong>{{ option.text }}</strong>
-                    <div class="button-group">
-                        <form method="post" style="display: inline;">
-                            {% csrf_token %}
-                            <input type="hidden" name="option_id" value="{{ option.id }}">
-                            {% for score_value in score_options %}
-                                <button type="submit" name="score" value="{{ score_value }}"
-                                        class="score-{{ score_value }}"
-                                        {% if score_value not in available_scores %}disabled{% endif %}>
-                                    +{{ score_value }}
-                                </button>
+                {% if voter_nickname %}
+                    <p class="lead">Ви увійшли як: <strong>{{ voter_nickname }}</strong></p>
+                    <hr>
+                {% endif %}
+
+                <p class="text-info">Будь ласка, розподіліть бали:
+                    {% for score in available_scores %}
+                        <span class="badge {% if score > 0 %}bg-success{% elif score < 0 %}bg-danger{% else %}bg-secondary{% endif %} me-1">{{ score }}</span>
+                    {% endfor %}
+                    (Потрібно призначити {{ active_poll.num_options_to_vote }} унікальних балів)
+                </p>
+
+                {% if temp_votes %}
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            Ваші призначені бали:
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            {# temp_votes.items містить пари (score_str, option_id) #}
+                            {% for score_str, option_id in temp_votes.items %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Бал <span class="badge {% if score_str > '0' %}bg-success{% elif score_str < '0' %}bg-danger{% else %}bg-secondary{% endif %} me-2">{{ score_str }}</span> призначено:
+                                    {# Використовуємо option_id_to_text_map з фільтром get_item #}
+                                    <strong>{{ option_id_to_text_map|get_item:option_id }}</strong>
+                                </li>
                             {% endfor %}
-                        </form>
+                        </ul>
                     </div>
-                </li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+                    <p class="mt-3">
+                        <a href="{% url 'polls:change_votes' %}" class="btn btn-warning btn-sm">Змінити призначені бали</a>
+                    </p>
+                {% endif %}
 
-    {% if temp_votes %}
-        <div class="current-votes">
-            <h3>Ваші поточні голоси:</h3>
-            <ul>
-                {% load poll_filters %}
-                {# temp_votes тепер словник {score_value: option_id} #}
-                {% for score_str, option_id in temp_votes.items %} {# <--- ЗМІНЕНО #}
-                    <li>
-                        Віддано <strong>{{ score_str }} балів</strong> за варіант:
-                        <strong>{{ options|get_option_by_id:option_id }}</strong>
-                    </li>
-                {% endfor %}
-            </ul>
+                <ul class="list-group list-group-flush mb-4">
+                    {% for option in options %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ option.text }}</strong>
+                                {% if option.assigned_score is not None %} {# Перевіряємо на None #}
+                                    <span class="badge {% if option.assigned_score > 0 %}bg-secondary{% elif option.assigned_score < 0 %}bg-dark{% else %}bg-info{% endif %} ms-2">Ваш бал: {{ option.assigned_score }}</span>
+                                {% endif %}
+                            </div>
+                            <div>
+                                {% if not option.is_selected %}
+                                    {# Показати кнопки для доступних балів #}
+                                    {% for score in option.available_scores %}
+                                        {# КОЖНА КНОПКА ТЕПЕР В СВОЇЙ ОКРЕМІЙ ФОРМІ #}
+                                        <form method="post" action="{% url 'polls:vote' %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="option_id" value="{{ option.id }}">
+                                            <button type="submit" name="score" value="{{ score }}"
+                                                    class="btn {% if score > 0 %}btn-outline-success{% elif score < 0 %}btn-outline-danger{% else %}btn-outline-secondary{% endif %} btn-sm me-1">
+                                                {{ score }}
+                                            </button>
+                                        </form>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="badge bg-info">Призначено</span>
+                                {% endif %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                {% if all_scores_used %}
+                    <a href="{% url 'polls:confirm_vote' %}" class="btn btn-success btn-lg">Підтвердити голосування</a>
+                {% else %}
+                    <p class="text-muted">Розподіліть усі {{ active_poll.num_options_to_vote }} унікальних балів, щоб підтвердити голосування.</p>
+                {% endif %}
+
+                <p class="mt-4">
+                    <a href="{% url 'polls:index' %}" class="btn btn-secondary">Повернутися на головну</a>
+                </p>
+
+            {% else %}
+                <div class="alert alert-info" role="alert">
+                    Наразі немає активних опитувань для голосування.
+                </div>
+                <p class="mt-4">
+                    <a href="{% url 'polls:index' %}" class="btn btn-secondary">Повернутися на головну</a>
+                </p>
+            {% endif %}
         </div>
-    {% endif %}
-
-    {% if not available_scores %}
-        <p>Ви використали всі свої бали. Будь ласка, <a href="{% url 'polls:confirm_vote' %}">підтвердіть ваші голоси</a>.</p>
-    {% endif %}
-
-{% endblock %}
+    </div>
+</div>
+{% endblock content %}

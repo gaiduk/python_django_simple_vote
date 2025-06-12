@@ -19,7 +19,7 @@ def get_option_by_id(options_list, option_id_str):
     except (ValueError, AttributeError): # Додано AttributeError для безпеки
         return "Некоректний ID варіанта або список об'єктів"
 
-@register.filter(name='get_item') # <--- Важливо: ім'я має бути 'get_item'
+@register.filter(name='get_item')
 def get_item(dictionary, key):
     """
     Повертає значення з словника за ключем.

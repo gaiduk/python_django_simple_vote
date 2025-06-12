@@ -1,74 +1,176 @@
+{# polls/templates/polls/base.html #}
+{% load static %} {# Дуже важливо для завантаження статичних файлів, таких як CSS, JS, зображення #}
 <!DOCTYPE html>
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Голосування{% endblock %}</title>
+    <title>Система Голосування</title>
+
+    {# Favicon - підключення #}
+    <link rel="icon" href="{% static 'images/favicon.png' %}" type="image/png">
+    {# Якщо у вас .ico, змініть type="image/x-icon" #}
+
+    {# Bootstrap CSS #}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+    {# Кастомні стилі #}
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
-        .container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h1, h2 { color: #0056b3; }
-        .messages { list-style: none; padding: 0; margin-bottom: 15px; } /* Додано для ul.messages */
-        .message { padding: 10px; margin-bottom: 10px; border-radius: 5px; }
-        .message.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .message.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .message.info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
-        form { margin-top: 20px; }
-        input[type="text"], input[type="submit"], button[type="submit"] { padding: 10px; border-radius: 5px; border: 1px solid #ddd; margin-right: 10px; }
-        input[type="submit"], button[type="submit"] { background-color: #007bff; color: white; cursor: pointer; border: none; }
-        input[type="submit"]:hover, button[type="submit"]:hover { background-color: #0056b3; }
-        ul { list-style: none; padding: 0; }
-        li { margin-bottom: 10px; }
-        .option-item {
-            display: flex;
-            align-items: center;
-            border: 1px solid #eee;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            background-color: #f9f9f9;
+        :root {
+            --primary-blue: #007bff; /* Основний синій */
+            --dark-blue: #0056b3;    /* Темніший синій для hover */
+            --light-grey: #f8f9fa;   /* Світло-сірий для фону */
+            --mid-grey: #e9ecef;     /* Середньо-сірий для чергування рядків */
+            --text-color: #343a40;   /* Темний текст */
         }
-        .option-item strong { flex-grow: 1; }
-        .option-item button {
-            margin-left: 10px;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+
+        body {
+            font-family: 'Arial', sans-serif; /* Простий і читабельний шрифт */
+            background-color: var(--light-grey); /* Світло-сірий фон */
+            color: var(--text-color);
+        }
+
+        .navbar {
+            background-color: var(--primary-blue); /* Синій фон для навігаційної панелі */
+            box-shadow: 0 2px 4px rgba(0,0,0,.1); /* Легка тінь */
+            padding: 0.8rem 1rem; /* Збільшимо padding */
+        }
+
+        .navbar-brand, .nav-link {
+            color: white !important; /* Білий текст для брендінгу та посилань */
+            font-weight: 600; /* Жирніший шрифт для навігації */
+            padding: 0.5rem 1rem; /* Трохи більше відступів */
+        }
+
+        .navbar-brand:hover, .nav-link:hover {
+            color: rgba(255, 255, 255, 0.8) !important; /* Легке затемнення при наведенні */
+        }
+
+        .btn-primary {
+            background-color: var(--primary-blue);
+            border-color: var(--primary-blue);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--dark-blue);
+            border-color: var(--dark-blue);
+        }
+
+        .card-header {
+            background-color: var(--primary-blue);
+            color: white;
             font-weight: bold;
         }
-        .option-item button.score-3 { background-color: #28a745; color: white; } /* Green */
-        .option-item button.score-2 { background-color: #ffc107; color: #333; } /* Yellow */
-        .option-item button.score-1 { background-color: #17a2b8; color: white; } /* Cyan */
-        .option-item button:disabled { background-color: #cccccc; cursor: not-allowed; }
-        .results-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        .results-table th, .results-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        .results-table th { background-color: #007bff; color: white; }
-        .results-table tr:nth-child(even) { background-color: #f2f2f2; }
-        .button-group button { margin: 5px; }
-        .current-votes { margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
-        .current-votes h3 { color: #555; }
-        .current-votes ul { list-style-type: disc; margin-left: 20px; }
-        .footer { text-align: center; margin-top: 30px; font-size: 0.9em; color: #777; }
-        p a { color: #007bff; text-decoration: none; }
-        p a:hover { text-decoration: underline; }
+
+        /* Стилі для повідомлень (messages) */
+        .messages {
+            list-style: none;
+            padding: 0;
+            margin-top: 1rem;
+            margin-left: 0; /* Вирівнюємо по лівому краю */
+            padding-left: 0; /* Прибираємо стандартний padding */
+        }
+        .messages li {
+            padding: .75rem 1.25rem;
+            margin-bottom: 1rem;
+            border: 1px solid transparent;
+            border-radius: .25rem;
+            position: relative; /* Для позиціонування кнопки закриття */
+        }
+        .messages .success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .messages .error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        .messages .info {
+            color: #0c5460;
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+        }
+        .messages .warning {
+            color: #856404;
+            background-color: #fff3cd;
+            border-color: #ffeeba;
+        }
+        .messages .btn-close {
+            position: absolute;
+            right: 1.25rem;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 0; /* Прибираємо стандартний padding кнопки закриття */
+        }
+
+
+        /* Стилі для таблиці результатів */
+        .table-row-odd {
+            background-color: white; /* Білий фон для непарних рядків */
+        }
+        .table-row-even {
+            background-color: var(--mid-grey); /* Сірий фон для парних рядків */
+        }
+        .table th, .table td {
+            border-color: #dee2e6; /* Колір ліній таблиці */
+            vertical-align: middle; /* Вирівнювання тексту по центру */
+            padding: 0.75rem; /* Стандартний padding Bootstrap */
+        }
+        .results-score {
+            font-size: 1.8rem; /* Збільшений розмір шрифту */
+            font-weight: bold;
+            color: var(--primary-blue); /* Синій колір для балу */
+        }
+
     </style>
 </head>
 <body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'polls:index' %}">
+                {# Фавікон у шапці - замість "Система Голосування" #}
+                <img src="{% static 'images/favicon.png' %}" alt="Logo" width="32" height="32" class="d-inline-block align-text-top me-2">
+                Система Голосування
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto"> {# ms-auto для вирівнювання праворуч #}
+                    {% if voter_nickname %}
+                    <li class="nav-item">
+                        <span class="nav-link">Ви: {{ voter_nickname }}</span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'polls:set_nickname' %}">Змінити нікнейм</a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'polls:results' %}">Результати</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
     <div class="container">
         {% if messages %}
             <ul class="messages">
                 {% for message in messages %}
-                    <li {% if message.tags %} class="message {{ message.tags }}"{% endif %}>{{ message }}</li>
+                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>
+                        {{ message }}
+                        <button type="button" class="btn-close float-end" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </li>
                 {% endfor %}
             </ul>
         {% endif %}
 
-        {% block content %}{% endblock %}
-
-        <div class="footer">
-            <p><a href="{% url 'polls:results' %}">Переглянути результати</a></p>
-        </div>
+        {% block content %}{% endblock content %}
     </div>
+
+    {# Bootstrap JS #}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 </html>

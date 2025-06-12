@@ -1,24 +1,52 @@
-{# polls/templates/polls/index.html #}
 {% extends 'polls/base.html' %}
-
-{% block title %}Система голосування{% endblock %}
+{% load crispy_forms_tags %} {# Переконайтесь, що це завантажено, якщо використовуєте crispy-forms #}
 
 {% block content %}
-    <h1>Ласкаво просимо до системи голосування!</h1>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            {% if active_poll %}
+                <h2 class="mb-4">{{ active_poll.title }}</h2>
+                {% if active_poll.description %}
+                    <p class="lead">{{ active_poll.description }}</p>
+                    <hr>
+                {% endif %}
 
-    {% if messages %}
-        <ul class="messages">
-            {% for message in messages %}
-                <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+                {% if voter_nickname %}
+                    <p class="lead">Ви увійшли як: <strong>{{ voter_nickname }}</strong>
+                        <a href="{% url 'polls:set_nickname' %}" class="btn btn-sm btn-outline-secondary ms-2">Змінити нікнейм</a>
+                    </p>
+                    <hr>
+                {% else %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            Введіть ваш нікнейм
+                        </div>
+                        <div class="card-body">
+                            <form action="{% url 'polls:set_nickname' %}" method="post">
+                                {% csrf_token %}
+                                {{ nickname_form|crispy }} {# Тут використовуємо форму, яка буде передана з views #}
+                                <button type="submit" class="btn btn-primary mt-3">Підтвердити нікнейм</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endif %}
 
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }} {# Поле для нікнейму #}
+                {% if voter_nickname %} {# Тільки якщо нікнейм встановлено, показуємо опції голосування #}
+                    {% if has_voted %}
+                        <p class="text-warning">Ви вже проголосували у цьому опитуванні!</p>
+                        <a href="{% url 'polls:results' %}" class="btn btn-info">Переглянути результати</a>
+                    {% else %}
+                        <a href="{% url 'polls:vote' %}" class="btn btn-primary btn-lg">Проголосувати</a>
+                    {% endif %}
+                {% endif %}
 
-        <button type="submit" name="vote_button">Проголосувати</button>
-        <button type="submit" name="results_button" class="secondary-button">Переглянути результати</button>
-    </form>
-{% endblock %}
+            {% else %}
+                <div class="alert alert-info" role="alert">
+                    Наразі немає активних опитувань. Будь ласка, створіть або активуйте опитування через <a href="{% url 'admin:index' %}">адмін-панель</a>.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock content %}

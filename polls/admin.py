@@ -1,83 +1,64 @@
 # polls/admin.py
 
 from django.contrib import admin
-from .models import Option, Vote, VotedUser
-from django.utils.html import format_html
-from django.urls import reverse
-from django.shortcuts import redirect
-from django.contrib import messages
-from django.db.models import Sum
+from .models import Poll, Option, VotedUser, Vote
 
 
-# Це новий клас для відображення голосів як "вбудованих" на сторінці Option
-class VoteInline(admin.TabularInline):  # TabularInline виглядає як таблиця, StackedInline - як блок
-    model = Vote
-    extra = 0  # Не показувати порожні форми для додавання нових голосів
-    fields = ('voter_nickname', 'score', 'timestamp',)  # Які поля показувати
-    readonly_fields = ('voter_nickname', 'score', 'timestamp',)  # Зробити їх тільки для читання
-    can_delete = False  # Заборонити видалення голосів прямо звідси
-
-    # Можна також додати можливість відображати посилання на редагування голосу,
-    # але для цього потрібно трохи більше налаштувань.
-    # Наразі ми просто відображаємо дані.
+# Реєстрація моделі Poll
+class OptionInline(admin.TabularInline):
+    model = Option
+    extra = 3  # Кількість порожніх форм для додавання варіантів
 
 
-@admin.register(Option)
-class OptionAdmin(admin.ModelAdmin):
-    list_display = ('text', 'total_score_display')
-    search_fields = ('text',)
-    inlines = [VoteInline]  # <--- ДОДАЙТЕ ЦЕЙ РЯДОК!
+@admin.register(Poll)
+class PollAdmin(admin.ModelAdmin):
+    # Визначаємо групи полів для кращої організації в адмінці
+    fieldsets = (
+        (None, {
+            'fields': ('title', 'description', 'is_active', 'created_at')
+        }),
+        ('Налаштування голосування', {
+            'fields': ('allow_negative_scores', 'min_score_value', 'max_score_value', 'num_options_to_vote'),
+            'description': 'Встановіть діапазон балів та кількість унікальних балів для розподілу.'
+        }),
+    )
 
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        return qs.annotate(total_score=Sum('vote__score'))
+    list_display = ('title', 'is_active', 'num_options_to_vote', 'get_score_range_display', 'created_at')
+    list_filter = ('is_active', 'allow_negative_scores', 'created_at')  # Додано фільтр для негативних балів
+    search_fields = ('title', 'description')
+    inlines = [OptionInline]
+    readonly_fields = ('created_at',)
 
-    def total_score_display(self, obj):
-        return obj.total_score if obj.total_score is not None else 0
+    # Метод для відображення діапазону балів у list_display
+    def get_score_range_display(self, obj):
+        return f"Від {obj.min_score_value} до {obj.max_score_value}"
 
-    total_score_display.short_description = 'Загальні бали'
-    total_score_display.admin_order_field = 'total_score'
-
-
-# Решта класів Admin залишаються без змін
-@admin.register(Vote)
-class VoteAdmin(admin.ModelAdmin):
-    list_display = ('voter_nickname', 'option', 'score', 'timestamp')
-    list_filter = ('option', 'score', 'timestamp')
-    search_fields = ('voter_nickname', 'option__text')
-    list_display_links = ('voter_nickname', 'option',)
+    get_score_range_display.short_description = "Діапазон балів"
 
 
+# Реєстрація моделі VotedUser
 @admin.register(VotedUser)
 class VotedUserAdmin(admin.ModelAdmin):
-    list_display = ('nickname', 'action_links')
-    search_fields = ('nickname',)
+    list_display = ('nickname', 'poll', 'voted_at')
+    list_filter = ('poll', 'voted_at')
+    search_fields = ('nickname', 'poll__title')
+    readonly_fields = ('voted_at',)
 
-    def action_links(self, obj):
-        return format_html(
-            '<a href="{}">Видалити голоси</a>',
-            reverse('admin:delete_user_votes', args=[obj.nickname])
-        )
 
-    action_links.short_description = "Дії"
+# Реєстрація моделі Vote
+@admin.register(Vote)
+class VoteAdmin(admin.ModelAdmin):
+    list_display = ('get_voted_user_nickname', 'get_poll_title', 'option', 'score')
+    list_filter = ('option__poll', 'score')
+    search_fields = ('voted_user__nickname', 'option__text', 'option__poll__title')
+    raw_id_fields = ('voted_user', 'option')
 
-    def get_urls(self):
-        urls = super().get_urls()
-        from django.urls import path
-        custom_urls = [
-            path('delete-user-votes/<str:nickname>/', self.admin_site.admin_view(self.delete_user_votes),
-                 name='delete_user_votes'),
-        ]
-        return custom_urls + urls
+    def get_poll_title(self, obj):
+        return obj.option.poll.title
 
-    def delete_user_votes(self, request, nickname):
-        if request.method == 'POST':
-            pass
+    get_poll_title.short_description = 'Опитування'
 
-        Vote.objects.filter(voter_nickname=nickname).delete()
-        VotedUser.objects.filter(nickname=nickname).delete()
+    def get_voted_user_nickname(self, obj):
+        return obj.voted_user.nickname
 
-        self.message_user(request,
-                          f"Усі голоси для нікнейму '{nickname}' були видалені. Користувач тепер може голосувати знову.",
-                          messages.SUCCESS)
-        return redirect('admin:polls_voteduser_changelist')
+    get_voted_user_nickname.short_description = 'Користувач'
